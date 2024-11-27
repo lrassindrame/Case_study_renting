@@ -37,6 +37,6 @@ def process_directory(input_directory, output_directory, trace_keys_to_remove, e
 input_directory = "datasets"
 output_directory = "datasets_clean"
 trace_keys_to_remove = ["case"]
-event_keys_to_remove = ["time", "activity", "resource"]
+event_keys_to_remove = ["time:timestamp", "concept:name"]
 
 process_directory(input_directory, output_directory, trace_keys_to_remove, event_keys_to_remove)
