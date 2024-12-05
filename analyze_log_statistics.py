@@ -9,8 +9,8 @@ def load_xes_files(directory):
 def extract_statistics(log):
     stats = {}
     # Compute the number of cases/traces
-    num_traces = len(log)
-    stats['number_of_traces'] = num_traces
+    number_of_traces = log.shape[0]
+    stats['number_of_traces'] = number_of_traces
 
     # Compute the number of events log
     num_events = sum(len(trace) for trace in log)
