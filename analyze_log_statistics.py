@@ -8,22 +8,23 @@ def load_xes_files(directory):
 # Compute statistics
 def extract_statistics(log):
     stats = {}
+    # Compute the number of cases/traces
+    num_traces = len(log)
+    stats['number_of_traces'] = num_traces
 
-    # Compute the number of cases
-    number_of_cases = len(log)
-    stats['number_of_cases'] = number_of_cases
-    
-    # Compute the number of events
-    number_of_events = log.shape[0]
-    stats['number_of_events'] = number_of_events
+    # Compute the number of events log
+    num_events = sum(len(trace) for trace in log)
+    stats['number_of_events'] = num_events
 
-    # Compute the number of variants
-    number_of_variants = log["case:concept:name"].nunique()
-    stats['number_of_variants'] = number_of_variants
+    # Compute the number of variants log
+    variants = pm4py.stats.get_variants(log)
+    num_variants = len(variants)
+    stats['number_of_variants'] = num_variants
 
-    # Compute the number of activities
-    number_of_activities = log["activity"].nunique()
-    stats['number_of_activities'] = number_of_activities
+    # Compute the number of activities log
+    activities = pm4py.get_event_attribute_values(log, "concept:name")
+    num_activities = len(activities)
+    stats['number_of_activities'] = num_activities
 
     # Start activity
     start_activities = pm4py.get_start_activities(log)
