@@ -42,15 +42,15 @@ def extract_statistics(log):
     activities_per_variant = log.groupby("case:concept:name")["activity"].apply(list)
     stats['activities_per_variant'] = activities_per_variant
 
-    # Compute the average number of activities per case
-    avg_activities_per_case = log.groupby("case:concept:name")["activity"].count().mean()
-    stats['avg_activities_per_case'] = avg_activities_per_case
-
     # Compute the minimum and maximum number of activities per case
     min_activities_per_case = min(log.groupby("case:concept:name")["activity"].count())
     max_activities_per_case = max(log.groupby("case:concept:name")["activity"].count())
     stats['min_activities_per_case'] = min_activities_per_case
     stats['max_activities_per_case'] = max_activities_per_case
+
+    # Compute the average number of activities per case
+    avg_activities_per_case = log.groupby("case:concept:name")["activity"].count().mean()
+    stats['avg_activities_per_case'] = avg_activities_per_case
 
     # Compute the minimum, maximum, and average case duration
     case_durations = pm4py.get_all_case_durations(log)
@@ -83,6 +83,7 @@ def extract_statistics(log):
 def main():
     directory = 'datasets'
     xes_files = load_xes_files(directory)
+    min_max_avg = {}
     
     for xes_file in xes_files:
         log = pm4py.read_xes(xes_file)
@@ -92,11 +93,87 @@ def main():
         
         print(f"Statistics for {xes_file}:")
         for key, value in stats.items():
+            if "case_duration" in str(key) :
+                min_max_avg["("+xes_file.split("\\")[-1]+") " + key] = value
             if str(key) in skip_keys :
                 continue
             print(f"{key}: {value}")
             print("-"*25) # separator between statistics
         print("="*25+"\n") # separator between files
+
+    for key, value in min_max_avg.items():
+        print(f"{key}: {value}")
+        print("-"*25) # separator between statistics
+
+    import matplotlib.pyplot as plt
+
+    # Separate the min, max, and avg values
+    min_values = {k: v for k, v in min_max_avg.items() if 'min_case_duration' in k}
+    max_values = {k: v for k, v in min_max_avg.items() if 'max_case_duration' in k}
+    avg_values = {k: v for k, v in min_max_avg.items() if 'avg_case_duration' in k}
+
+    # # Plot min values
+    # plt.figure(figsize=(10, 5))
+    # plt.bar(min_values.keys(), min_values.values(), color='blue')
+    # # plt.xticks(rotation=90)
+    # plt.title('Minimum Case Durations')
+    # plt.xlabel('XES Files')
+    # plt.ylabel('Duration')
+    # plt.tight_layout()
+    # plt.show()
+
+    # # Plot max values
+    # plt.figure(figsize=(10, 5))
+    # plt.bar(max_values.keys(), max_values.values(), color='green')
+    # plt.xticks(rotation=90)
+    # plt.title('Maximum Case Durations')
+    # plt.xlabel('XES Files')
+    # plt.ylabel('Duration')
+    # plt.tight_layout()
+    # plt.show()
+
+    # # Plot avg values
+    # plt.figure(figsize=(10, 5))
+    # plt.bar(avg_values.keys(), avg_values.values(), color='red')
+    # plt.xticks(rotation=90)
+    # plt.title('Average Case Durations')
+    # plt.xlabel('XES Files')
+    # plt.ylabel('Duration')
+    # plt.tight_layout()
+    # plt.show()
+    # Combine min, max, and avg values into a single dictionary
+    combined_values = {}
+    for key in min_values.keys():
+        base_key = key.replace('min_case_duration', '')
+        combined_values[base_key] = {
+            'min': min_values[key],
+            'max': max_values[base_key + 'max_case_duration'],
+            'avg': avg_values[base_key + 'avg_case_duration']
+        }
+
+    # Plot combined values
+    labels = combined_values.keys()
+    min_vals = [v['min'] for v in combined_values.values()]
+    max_vals = [v['max'] for v in combined_values.values()]
+    avg_vals = [v['avg'] for v in combined_values.values()]
+
+    x = range(len(labels))  # the label locations
+    width = 0.2  # the width of the bars
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.bar(x, min_vals, width, label='Min', color='blue')
+    ax.bar([p + width for p in x], max_vals, width, label='Max', color='green')
+    ax.bar([p + width*2 for p in x], avg_vals, width, label='Avg', color='red')
+
+    ax.set_xlabel('XES Files')
+    ax.set_ylabel('Duration')
+    ax.set_title('Case Durations (Min, Max, Avg)')
+    ax.set_xticks([p + width for p in x])
+    ax.set_xticklabels(labels, rotation=90)
+    ax.legend()
+
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == "__main__":
     main()
